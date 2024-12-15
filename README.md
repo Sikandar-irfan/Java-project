@@ -54,7 +54,7 @@ Contributions are welcome! Please feel free to submit a pull request or open an 
 For contributions, you can contact:
 - **Sikandar Irfan**: sikandarirfan150162@gmail.com
 - **Srihari**: srihari4989@gmail.com
-- **Vinay Shivananda Jumnal **: vinayjumnal24@gmail.com
+- **Vinay Shivananda Jumnal**: vinayjumnal24@gmail.com
 
 ## License
 This project is licensed under the MIT License.
