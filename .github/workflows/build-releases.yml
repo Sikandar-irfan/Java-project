@@ -12,11 +12,12 @@ on:
         default: '1.0.0'
 
 jobs:
-  build-jar:
+  build:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
     
     - name: Set up JDK 17
       uses: actions/setup-java@v4
@@ -31,179 +32,53 @@ jobs:
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
         restore-keys: ${{ runner.os }}-m2
     
-    - name: Build with Maven
+    - name: Build JAR with Maven
       run: |
         cd TicTacToe
-        mvn clean package -DskipTests
-    
-    - name: Upload JAR artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: tictactoe-jar
-        path: TicTacToe/target/TicTacToe-*.jar
-
-  build-windows:
-    runs-on: windows-latest
-    needs: build-jar
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up JDK 17
-      uses: actions/setup-java@v4
-      with:
-        java-version: '17'
-        distribution: 'temurin'
-    
-    - name: Cache Maven packages
-      uses: actions/cache@v4
-      with:
-        path: ~/.m2
-        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-        restore-keys: ${{ runner.os }}-m2
-    
-    - name: Build JAR
-      run: |
-        cd TicTacToe
-        mvn clean package -DskipTests
-    
-    - name: Create Windows Executable
-      run: |
-        cd TicTacToe
-        mvn package -P windows -DskipTests
-    
-    - name: Upload Windows artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: tictactoe-windows
-        path: |
-          TicTacToe/target/TicTacToe-*.exe
-          TicTacToe/target/dist/
-
-  build-linux:
-    runs-on: ubuntu-latest
-    needs: build-jar
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up JDK 17
-      uses: actions/setup-java@v4
-      with:
-        java-version: '17'
-        distribution: 'temurin'
-    
-    - name: Cache Maven packages
-      uses: actions/cache@v4
-      with:
-        path: ~/.m2
-        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-        restore-keys: ${{ runner.os }}-m2
-    
-    - name: Build JAR
-      run: |
-        cd TicTacToe
-        mvn clean package -DskipTests
-    
-    - name: Create Linux AppImage
-      run: |
-        cd TicTacToe
-        mvn package -P linux -DskipTests
-    
-    - name: Upload Linux artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: tictactoe-linux
-        path: TicTacToe/target/dist/
-
-  build-macos:
-    runs-on: macos-latest
-    needs: build-jar
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up JDK 17
-      uses: actions/setup-java@v4
-      with:
-        java-version: '17'
-        distribution: 'temurin'
-    
-    - name: Cache Maven packages
-      uses: actions/cache@v4
-      with:
-        path: ~/.m2
-        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-        restore-keys: ${{ runner.os }}-m2
-    
-    - name: Build JAR
-      run: |
-        cd TicTacToe
-        mvn clean package -DskipTests
-    
-    - name: Create macOS app bundle
-      run: |
-        cd TicTacToe
-        jpackage --input target --name TicTacToe --main-jar TicTacToe-1.0.0.jar --main-class com.example.TicTacToeSwing --type app-image --dest target/dist
-    
-    - name: Upload macOS artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: tictactoe-macos
-        path: TicTacToe/target/dist/
-
-  create-release:
-    runs-on: ubuntu-latest
-    needs: [build-jar, build-windows, build-linux, build-macos]
-    if: startsWith(github.ref, 'refs/tags/')
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Download all artifacts
-      uses: actions/download-artifact@v4
+        mvn clean compile package -DskipTests
+        ls -la target/
     
     - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/')
       id: create_release
       uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
+        tag_name: ${{ github.ref_name }}
+        release_name: Tic Tac Toe Game ${{ github.ref_name }}
         body: |
-          ## Tic Tac Toe Game Release
+          ## 🎮 Tic Tac Toe Game ${{ github.ref_name }}
           
-          ### Downloads
-          - **Windows**: Download the `.exe` file for Windows
-          - **Linux**: Download the AppImage for Linux
-          - **macOS**: Download the `.app` bundle for macOS
-          - **Cross-platform**: Download the `.jar` file (requires Java 17+)
+          A cross-platform Tic Tac Toe game with intelligent AI opponent.
           
-          ### Changes
-          - GUI-based Tic Tac Toe game
-          - Player vs Player and Player vs Computer modes
-          - Score tracking
-          - Minimax algorithm for computer AI
+          ### 📦 Download
+          
+          **Cross-platform JAR file** (requires Java 17+):
+          - Download `TicTacToe-1.0.0.jar`
+          - Run with: `java -jar TicTacToe-1.0.0.jar`
+          
+          ### ✨ Features
+          - 🎯 Player vs Player and Player vs Computer modes
+          - 🧠 Smart AI using Minimax algorithm
+          - 📊 Score tracking
+          - 🔄 Game reset and mode switching
+          - 🎨 Clean, intuitive Swing interface
+          
+          ### 🚀 How to Run
+          1. Make sure you have Java 17+ installed
+          2. Download the JAR file
+          3. Double-click the JAR file or run: `java -jar TicTacToe-1.0.0.jar`
         draft: false
         prerelease: false
     
-    - name: Upload JAR Release Asset
+    - name: Upload JAR to Release
+      if: startsWith(github.ref, 'refs/tags/')
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./tictactoe-jar/TicTacToe-1.0.0.jar
+        asset_path: ./TicTacToe/target/TicTacToe-1.0.0.jar
         asset_name: TicTacToe-1.0.0.jar
         asset_content_type: application/java-archive
-    
-    - name: Upload Windows EXE Release Asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./tictactoe-windows/TicTacToe-1.0.0.exe
-        asset_name: TicTacToe-1.0.0-Windows.exe
-        asset_content_type: application/octet-stream
