@@ -1,4 +1,4 @@
-name: Build and Release
+name: Build Multi-Platform Releases
 
 on:
   push:
@@ -37,7 +37,7 @@ jobs:
         cd TicTacToe
         mvn clean compile package -DskipTests
         ls -la target/
-    
+        
     - name: Create Release
       if: startsWith(github.ref, 'refs/tags/')
       id: create_release
@@ -46,29 +46,50 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: ${{ github.ref_name }}
-        release_name: Tic Tac Toe Game ${{ github.ref_name }}
+        release_name: 🎮 Tic Tac Toe Game ${{ github.ref_name }}
         body: |
           ## 🎮 Tic Tac Toe Game ${{ github.ref_name }}
           
           A cross-platform Tic Tac Toe game with intelligent AI opponent.
           
-          ### 📦 Download
+          ### 📦 Downloads
           
           **Cross-platform JAR file** (requires Java 17+):
           - Download `TicTacToe-1.0.0.jar`
           - Run with: `java -jar TicTacToe-1.0.0.jar`
           
+          **Windows Executable**:
+          - Download `TicTacToe-1.0.0.exe` (no Java installation required)
+          - Double-click to run
+          
           ### ✨ Features
-          - 🎯 Player vs Player and Player vs Computer modes
-          - 🧠 Smart AI using Minimax algorithm
-          - 📊 Score tracking
-          - 🔄 Game reset and mode switching
-          - 🎨 Clean, intuitive Swing interface
+          - 🎯 **Dual Game Modes**: Player vs Player and Player vs Computer
+          - 🧠 **Smart AI**: Advanced Minimax algorithm for challenging gameplay
+          - 📊 **Score Tracking**: Keep track of wins and draws
+          - 🔄 **Quick Reset**: Instant game restart and mode switching
+          - 🎨 **Clean Interface**: Intuitive Swing-based GUI
+          - ⚡ **Cross-Platform**: Works on Windows, macOS, and Linux
           
           ### 🚀 How to Run
+          
+          **Option 1: JAR File (All Platforms)**
           1. Make sure you have Java 17+ installed
-          2. Download the JAR file
+          2. Download `TicTacToe-1.0.0.jar`
           3. Double-click the JAR file or run: `java -jar TicTacToe-1.0.0.jar`
+          
+          **Option 2: Windows Executable**
+          1. Download `TicTacToe-1.0.0.exe`
+          2. Double-click to run (Java bundled inside)
+          
+          ### 🎮 Game Instructions
+          - Click any empty square to make your move
+          - In Player vs Computer mode, you play as X, AI plays as O
+          - The AI uses strategic thinking to provide a challenging experience
+          - Use "New Game" to restart or "Switch Mode" to change game type
+          
+          ---
+          
+          🔧 **Technical Details**: Built with Java 17, Maven, Launch4j for Windows packaging
         draft: false
         prerelease: false
     
@@ -82,3 +103,53 @@ jobs:
         asset_path: ./TicTacToe/target/TicTacToe-1.0.0.jar
         asset_name: TicTacToe-1.0.0.jar
         asset_content_type: application/java-archive
+        
+  build-windows:
+    runs-on: windows-latest
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+    
+    - name: Cache Maven packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-m2
+    
+    - name: Build Windows EXE
+      run: |
+        cd TicTacToe
+        mvn clean package -DskipTests
+        dir target\*.exe
+        
+    - name: Get Release Upload URL
+      id: get_release
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const { data: release } = await github.rest.repos.getReleaseByTag({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            tag: context.ref.replace('refs/tags/', '')
+          });
+          return release.upload_url;
+        
+    - name: Upload Windows EXE to Release
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.get_release.outputs.result }}
+        asset_path: ./TicTacToe/target/TicTacToe-1.0.0.exe
+        asset_name: TicTacToe-1.0.0.exe
+        asset_content_type: application/octet-stream

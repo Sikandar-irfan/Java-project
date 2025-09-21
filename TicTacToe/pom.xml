@@ -86,7 +86,7 @@
                                 <mainClass>${main.class}</mainClass>
                                 <preCp>anything</preCp>
                             </classPath>
-                            <icon>src/main/resources/icon.ico</icon>
+                            <!-- <icon>src/main/resources/icon.ico</icon> -->
                             <jre>
                                 <bundledJre64Bit>false</bundledJre64Bit>
                                 <bundledJreAsFallback>false</bundledJreAsFallback>
